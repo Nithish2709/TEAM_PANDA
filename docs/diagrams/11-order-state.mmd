@@ -1,0 +1,37 @@
+%%{init: {'theme': 'dark'}}%%
+stateDiagram-v2
+    direction LR
+
+    [*] --> CREATED : Order Created\n(after payment success)
+
+    CREATED --> PAYMENT_PENDING : Awaiting Payment\nConfirmation
+    CREATED --> CANCELLED : Manual Cancel
+
+    PAYMENT_PENDING --> CONFIRMED : Payment Successful\n(PaymentConfirmedEvent)
+    PAYMENT_PENDING --> PAYMENT_FAILED : Payment Failed /\nTimeout
+
+    PAYMENT_FAILED --> CANCELLED : Auto-cancel
+
+    CONFIRMED --> PROCESSING : Warehouse picks order
+
+    PROCESSING --> SHIPPED : Order dispatched
+
+    SHIPPED --> OUT_FOR_DELIVERY : With courier
+
+    OUT_FOR_DELIVERY --> DELIVERED : Customer received
+
+    CANCELLED --> [*]
+    DELIVERED --> [*]
+
+    note right of PAYMENT_PENDING
+        If Order Service crashes here,
+        the PaymentConfirmedEvent in Kafka
+        is retried when service recovers.
+        Idempotency key prevents duplicate order.
+    end note
+
+    note right of CONFIRMED
+        Inventory: reserved → sold
+        Kafka: OrderConfirmedEvent emitted
+        Triggers: Shipment + Notification
+    end note

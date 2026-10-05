@@ -1,0 +1,55 @@
+erDiagram
+    CUSTOMER ||--o{ INVENTORY_RESERVATION : makes
+    CUSTOMER ||--o{ ORDERS : places
+    PRODUCT ||--|| INVENTORY : has
+    INVENTORY ||--o{ INVENTORY_RESERVATION : reserves
+    INVENTORY_RESERVATION ||--o| PAYMENT : initiates
+    INVENTORY_RESERVATION ||--o| ORDERS : becomes
+    PAYMENT ||--|| ORDERS : confirms
+
+    CUSTOMER {
+        bigint customer_id PK
+        string name
+        string email
+    }
+
+    PRODUCT {
+        bigint product_id PK
+        string name
+        decimal price
+    }
+
+    INVENTORY {
+        bigint product_id PK
+        int total_inventory
+        int available_quantity
+        int reserved_quantity
+        int sold_quantity
+    }
+
+    INVENTORY_RESERVATION {
+        string reservation_id PK
+        bigint product_id FK
+        bigint customer_id FK
+        int quantity
+        string status
+        timestamp expires_at
+        string idempotency_key
+    }
+
+    PAYMENT {
+        string payment_id PK
+        string reservation_id FK
+        string transaction_reference
+        decimal amount
+        string status
+        string idempotency_key
+    }
+
+    ORDERS {
+        string order_id PK
+        bigint customer_id FK
+        string reservation_id FK
+        string payment_id FK
+        string status
+    }

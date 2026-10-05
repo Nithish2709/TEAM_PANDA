@@ -1,0 +1,49 @@
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    subgraph Internet["Internet"]
+        Users["👥 10,000 Users"]
+    end
+
+    subgraph Edge["Edge Layer"]
+        CDN["Cloudflare CDN / WAF"]
+        LB["Nginx Load Balancer\n(Round-Robin)"]
+    end
+
+    subgraph AppTier["Application Tier (Horizontally Scalable)"]
+        B1["Spring Boot\nInstance 1\n:8080"]
+        B2["Spring Boot\nInstance 2\n:8080"]
+        B3["Spring Boot\nInstance N\n:8080"]
+        FE["React Frontend\n(Nginx static)\n:80"]
+    end
+
+    subgraph DataTier["Data Tier"]
+        PG_PRIMARY[("PostgreSQL Primary\n(Read/Write)\n:5432")]
+        PG_REPLICA[("PostgreSQL Replica\n(Read Only)\n:5433")]
+        REDIS[("Redis\n:6379")]
+        KAFKA["Kafka Cluster\n:9092"]
+    end
+
+    subgraph Observability["Observability"]
+        PROM["Prometheus\n:9090"]
+        GRAFANA["Grafana\n:3001"]
+    end
+
+    Users --> CDN --> LB
+    LB --> B1
+    LB --> B2
+    LB --> B3
+    LB --> FE
+
+    B1 --> PG_PRIMARY
+    B2 --> PG_PRIMARY
+    B3 --> PG_PRIMARY
+
+    B1 --> PG_REPLICA
+    B2 --> PG_REPLICA
+
+    B1 & B2 & B3 --> REDIS
+    B1 & B2 & B3 --> KAFKA
+
+    PG_PRIMARY -.->|Streaming replication| PG_REPLICA
+
+    B1 & B2 & B3 --> PROM --> GRAFANA

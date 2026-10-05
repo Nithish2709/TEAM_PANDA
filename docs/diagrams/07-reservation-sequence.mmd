@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor User
+    participant API as API Gateway
+    participant Checkout as CheckoutFacade
+    participant Inv as Inventory Service
+    participant DB as PostgreSQL
+
+    User->>API: POST /api/reservations (idempotency_key)
+    API->>Checkout: Create Reservation
+    Checkout->>Inv: Reserve 1 unit
+    Inv->>DB: SELECT * FROM inventory FOR UPDATE
+    activate DB
+    DB-->>Inv: available_quantity = 25
+    
+    alt quantity > 0
+        Inv->>DB: UPDATE inventory SET available=24, reserved=1
+        Inv->>DB: INSERT INTO inventory_reservation (status=RESERVED)
+        DB-->>Inv: Commit Transaction
+        deactivate DB
+        Inv-->>Checkout: Reservation ID: RES-123
+        Checkout-->>API: 201 Created (RES-123)
+        API-->>User: Success
+    else quantity == 0
+        Inv->>DB: Rollback
+        Inv-->>Checkout: Sold Out Exception
+        Checkout-->>API: 409 Conflict
+        API-->>User: Sold Out
+    end

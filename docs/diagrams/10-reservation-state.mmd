@@ -1,0 +1,18 @@
+stateDiagram-v2
+    [*] --> AVAILABLE : Stock Exists
+
+    AVAILABLE --> RESERVED : User clicks Buy
+    
+    RESERVED --> PAYMENT_PENDING : User proceeds to checkout
+    RESERVED --> RELEASED : Expiry timeout (No action)
+    
+    PAYMENT_PENDING --> CONFIRMED : Payment Success
+    PAYMENT_PENDING --> PAYMENT_FAILED : Payment Declined/Failed
+    PAYMENT_PENDING --> RELEASED : Payment Gateway Timeout
+    
+    PAYMENT_FAILED --> RELEASED : Inventory unlocked
+    
+    CONFIRMED --> SOLD : Order successfully created
+    
+    RELEASED --> AVAILABLE : Background job recovers stock
+    SOLD --> [*]

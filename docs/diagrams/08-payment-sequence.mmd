@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor User
+    participant API as API Gateway
+    participant PaySvc as Payment Service
+    participant Gateway as External Payment Gateway
+    participant Kafka as Message Broker
+    participant OrdSvc as Order Service
+
+    User->>API: POST /api/payments (RES-123)
+    API->>PaySvc: Initiate Payment
+    PaySvc->>Gateway: Charge Card
+    
+    alt Success
+        Gateway-->>PaySvc: Success (TX-999)
+        PaySvc->>PaySvc: Update Payment Status = SUCCESS
+        PaySvc->>Kafka: Publish PaymentSucceeded(TX-999)
+        PaySvc-->>API: 200 OK
+        API-->>User: Payment Successful
+        
+        Note over Kafka,OrdSvc: Asynchronous Order Creation
+        Kafka-->>OrdSvc: Consume PaymentSucceeded
+        OrdSvc->>OrdSvc: Idempotency Check
+        OrdSvc->>OrdSvc: Create Order (Status=CONFIRMED)
+        
+    else Timeout / Failure
+        Gateway-->>PaySvc: Timeout / Error
+        PaySvc->>PaySvc: Update Payment Status = FAILED
+        PaySvc->>Kafka: Publish PaymentFailed(RES-123)
+        PaySvc-->>API: 402 Payment Required
+        API-->>User: Payment Failed
+    end

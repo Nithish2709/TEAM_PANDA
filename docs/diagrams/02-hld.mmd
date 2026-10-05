@@ -1,0 +1,42 @@
+%%{init: {'theme': 'dark'}}%%
+flowchart TD
+    Users["👥 10,000 Users"] --> CDN["CDN / WAF\n(Cloudflare)"]
+    CDN --> LB["Load Balancer\n(Nginx / AWS ALB)"]
+    LB --> GW["API Gateway\n(Rate Limiting + Auth)"]
+
+    subgraph Services["Application Services (Spring Boot)"]
+        GW --> PROD["Product Service"]
+        GW --> CART["Cart Service"]
+        GW --> INV["Inventory &\nReservation Service\n⚡ CRITICAL PATH"]
+        GW --> CHECKOUT["Checkout Service\n(Facade)"]
+        GW --> PAY["Payment Service"]
+        GW --> ORD["Order Service"]
+        GW --> SHIP["Shipment Service"]
+        GW --> NOTIF["Notification Service"]
+    end
+
+    subgraph Data["Data Layer"]
+        PG[("PostgreSQL\n(Primary source of truth)")]
+        REDIS[("Redis\n(Cache + Rate Limit)")]
+        KAFKA["Kafka\n(Async Events)"]
+    end
+
+    subgraph Observability["Observability"]
+        PROM["Prometheus"]
+        GRAFANA["Grafana\nDashboard"]
+        OTel["OpenTelemetry\n(Distributed Tracing)"]
+    end
+
+    Services --> PG
+    Services --> REDIS
+    Services --> KAFKA
+    KAFKA --> ORD
+    KAFKA --> NOTIF
+    KAFKA --> SHIP
+
+    Services --> PROM
+    PROM --> GRAFANA
+
+    style INV fill:#ff6b35,color:#fff,stroke:#ff4500
+    style CHECKOUT fill:#4a9eff,color:#fff
+    style PAY fill:#4a9eff,color:#fff

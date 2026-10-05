@@ -1,0 +1,27 @@
+%%{init: {'theme': 'dark'}}%%
+C4Container
+    title Container Diagram — SALESTORM
+
+    Person(customer, "Customer")
+    Person(admin, "Admin")
+
+    Container(frontend, "React Frontend", "React + TypeScript + Vite", "Flash-sale dashboard, checkout UI, order tracking, admin controls")
+    Container(backend, "Spring Boot Backend", "Java 21 / Spring Boot 3", "Monolith-prototype implementing all services: Inventory, Checkout, Payment, Order, Scheduler")
+    ContainerDb(postgres, "PostgreSQL 16", "Relational DB", "Inventory, reservations, orders, payments. Source of truth.")
+    ContainerDb(redis, "Redis 7", "In-memory store", "Product stock cache, rate limiting, idempotency key cache")
+    Container(kafka, "Kafka", "Message broker", "PaymentConfirmed, OrderConfirmed, ReservationExpired events")
+
+    Container(prometheus, "Prometheus", "Metrics scraper", "Scrapes /actuator/prometheus every 15s")
+    Container(grafana, "Grafana", "Dashboard", "Visualises request rate, latency, inventory, error rate")
+
+    System_Ext(gateway, "Payment Gateway", "Mock / Stripe")
+
+    Rel(customer, frontend, "Uses", "HTTPS")
+    Rel(admin, frontend, "Monitors", "HTTPS")
+    Rel(frontend, backend, "REST API calls", "HTTP/JSON")
+    Rel(backend, postgres, "Reads/Writes", "JDBC / JPA")
+    Rel(backend, redis, "Cache get/set", "Redis Protocol")
+    Rel(backend, kafka, "Publishes/Consumes events", "Kafka Protocol")
+    Rel(backend, gateway, "Processes payments", "HTTPS")
+    Rel(prometheus, backend, "Scrapes metrics", "HTTP /actuator/prometheus")
+    Rel(grafana, prometheus, "Queries", "PromQL")

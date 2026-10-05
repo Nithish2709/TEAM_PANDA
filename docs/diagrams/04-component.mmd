@@ -1,0 +1,84 @@
+%%{init: {'theme': 'dark'}}%%
+classDiagram
+    direction TB
+
+    class ReservationController {
+        +createReservation(body, idempotencyKey) ResponseEntity
+        +releaseReservation(id) ResponseEntity
+        +checkout(body, idempotencyKey) ResponseEntity
+        +getOrder(id) ResponseEntity
+        +getPayment(id) ResponseEntity
+    }
+
+    class CheckoutService {
+        -inventoryService InventoryService
+        -paymentService PaymentService
+        -orderService OrderService
+        +checkout(customerId, productId, qty, price, key) CheckoutResult
+    }
+
+    class InventoryService {
+        -inventoryRepository InventoryRepository
+        -reservationRepository InventoryReservationRepository
+        +reserveInventory(productId, customerId, qty, key) InventoryReservation
+        +releaseReservation(reservationId) boolean
+        +confirmReservation(reservationId) void
+        +releaseExpiredReservations() void
+    }
+
+    class PaymentService {
+        -paymentRepository PaymentRepository
+        -failureSimulator FailureSimulator
+        +processPayment(orderId, amount, key) Payment
+        +getPayment(id) Optional~Payment~
+    }
+
+    class OrderService {
+        -orderRepository OrderRepository
+        -failureSimulator FailureSimulator
+        +createOrder(customerId, productId, qty, amount, reservationId, key) Order
+        +advanceState(orderId, status) Order
+        +handlePaymentOutcome(orderId, paymentStatus) void
+    }
+
+    class ReservationExpiryScheduler {
+        -inventoryService InventoryService
+        +sweepExpiredReservations() void
+    }
+
+    class InventoryRepository {
+        <<interface>>
+        +findByIdForUpdate(productId) Optional~Inventory~
+    }
+
+    class InventoryReservationRepository {
+        <<interface>>
+        +findByIdempotencyKey(key) Optional~InventoryReservation~
+        +findExpiredReservations(now) List~InventoryReservation~
+        +releaseIfStillReserved(id, now) int
+    }
+
+    class PaymentRepository {
+        <<interface>>
+        +findByIdempotencyKey(key) Optional~Payment~
+    }
+
+    class OrderRepository {
+        <<interface>>
+        +findByIdempotencyKey(key) Optional~Order~
+    }
+
+    ReservationController --> CheckoutService
+    ReservationController --> InventoryService
+    ReservationController --> OrderService
+    ReservationController --> PaymentService
+
+    CheckoutService --> InventoryService
+    CheckoutService --> PaymentService
+    CheckoutService --> OrderService
+
+    InventoryService --> InventoryRepository
+    InventoryService --> InventoryReservationRepository
+    PaymentService --> PaymentRepository
+    OrderService --> OrderRepository
+    ReservationExpiryScheduler --> InventoryService

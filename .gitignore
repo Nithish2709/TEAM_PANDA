@@ -1,0 +1,101 @@
+# ==============================================================================
+# SALESTORM — Root .gitignore
+# ==============================================================================
+
+# ─── Environment & Secrets ───────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+# Keep example environment file tracked
+!.env.example
+
+# ─── Java & Maven (Backend) ─────────────────────────────────────────────────
+backend/target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+!backend/.mvn/wrapper/maven-wrapper.jar
+
+# ─── Node.js & Vite (Frontend) ──────────────────────────────────────────────
+node_modules/
+**/node_modules/
+frontend/dist/
+**/dist/
+dist-ssr/
+*.local
+.vite/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ─── Python & Simulation ─────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+# ─── IDE & Text Editors ─────────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+*.sublime-workspace
+*.sublime-project
+
+# ─── Operating System & Temporary Files ─────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+*.log
+logs/
+**/logs/
+
+# ─── Docker & Persistent Data Directories ───────────────────────────────────
+postgres_data/
+redis_data/
+grafana_data/

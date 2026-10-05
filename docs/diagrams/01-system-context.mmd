@@ -1,0 +1,18 @@
+%%{init: {'theme': 'dark'}}%%
+C4Context
+    title System Context — SALESTORM Flash Sale Platform
+
+    Person(customer, "Customer", "Browses products, places flash-sale orders")
+    Person(admin, "Admin / Ops", "Monitors dashboards, injects failures for demo")
+
+    System(salestorm, "SALESTORM", "Handles 10,000 concurrent purchase attempts for 100 units. Prevents overselling, handles payment failures, recovers from service crashes.")
+
+    System_Ext(paymentGateway, "Payment Gateway", "External payment processor (Stripe / Razorpay / Mock)")
+    System_Ext(warehouse, "Warehouse / WMS", "Receives confirmed orders for fulfilment")
+    System_Ext(notifProvider, "Notification Provider", "Email / SMS / Push delivery (SendGrid, Twilio)")
+
+    Rel(customer, salestorm, "Browses products, clicks Buy Now", "HTTPS/REST")
+    Rel(admin, salestorm, "Views metrics, injects failures", "HTTPS/REST + Grafana")
+    Rel(salestorm, paymentGateway, "Processes payments", "HTTPS")
+    Rel(salestorm, warehouse, "Sends confirmed orders", "Kafka / webhook")
+    Rel(salestorm, notifProvider, "Sends order confirmations", "Kafka / SMTP / SMS API")

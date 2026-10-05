@@ -1,0 +1,52 @@
+%%{init: {'theme': 'dark'}}%%
+sequenceDiagram
+    actor Customer
+    participant API as API Gateway
+    participant INV as Inventory Service
+    participant DB as PostgreSQL
+    participant PAY as Payment Service
+    participant GW as Payment Gateway
+    participant KAFKA as Kafka
+    participant ORD as Order Service
+
+    Customer->>API: POST /api/checkout\n{productId, customerId, qty}\nIdempotency-Key: ABC123
+
+    %% Step 1: Reserve Inventory
+    API->>INV: reserveInventory(productId, qty, "RES-ABC123")
+    INV->>DB: SELECT ... FOR UPDATE (pessimistic lock)
+    DB-->>INV: Row locked
+    INV->>INV: Check available_quantity >= qty
+    INV->>DB: UPDATE inventory (available--, reserved++)
+    INV->>DB: INSERT inventory_reservation
+    DB-->>INV: Reservation created
+    INV-->>API: Reservation{id, status=RESERVED, expiresAt}
+
+    %% Step 2: Create Order
+    API->>ORD: createOrder(customerId, reservationId, "ORD-ABC123")
+    ORD->>DB: INSERT orders (status=CREATED)
+    ORD->>DB: UPDATE orders (status=PAYMENT_PENDING)
+    DB-->>ORD: Order created
+    ORD-->>API: Order{id, status=PAYMENT_PENDING}
+
+    %% Step 3: Process Payment
+    API->>PAY: processPayment(orderId, amount, "PAY-ABC123")
+    PAY->>DB: INSERT payment (status=PENDING)
+    PAY->>GW: Charge customer
+    GW-->>PAY: 200 OK — payment approved
+
+    %% Step 4a: Success path
+    PAY->>DB: UPDATE payment (status=SUCCESS)
+    PAY->>KAFKA: publish PaymentConfirmedEvent
+    PAY-->>API: Payment{status=SUCCESS}
+
+    %% Step 5: Confirm
+    API->>INV: confirmReservation(reservationId)
+    INV->>DB: UPDATE inventory (reserved--, sold++)
+    INV->>DB: UPDATE reservation (status=SOLD)
+
+    API->>ORD: handlePaymentOutcome(orderId, SUCCESS)
+    ORD->>DB: UPDATE orders (status=CONFIRMED)
+
+    API-->>Customer: 201 Created\n{orderId, paymentId, status=CONFIRMED}
+
+    Note over KAFKA,ORD: (Async) Order Service consumes PaymentConfirmedEvent\nIdempotency key prevents duplicate if order already created
