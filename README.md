@@ -391,5 +391,5 @@ All architectural decisions are documented in detail in [`docs/`](docs/):
 ---
 
 ## 👥 Authors & Team Panda
-* **Team Panda** — Built for the **SYSCRAFTERS 2026** National System Design Hackathon.
+* **Team Panda** — Built for the System Design Hackathon.
 * Designed with an **Architecture-First, Correctness-Driven** engineering philosophy.
